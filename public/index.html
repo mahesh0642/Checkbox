@@ -88,6 +88,61 @@
       input[type="checkbox"]:active {
         transform: scale(0.95);
       }
+
+      .alert-error {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 1rem;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1rem;
+        color: #fca5a5;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        backdrop-filter: blur(10px);
+        animation: slideDown 0.3s ease-out;
+        position: relative;
+      }
+
+      .alert-error::before {
+        content: '⚠️';
+        margin-right: 0.75rem;
+        font-size: 1.25rem;
+      }
+
+      .alert-close {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #fca5a5;
+        font-size: 1.25rem;
+        cursor: pointer;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+      }
+
+      .alert-close:hover {
+        background: rgba(239, 68, 68, 0.2);
+        transform: translateY(-50%) scale(1.1);
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
     </style>
   </head>
   <body>
@@ -96,16 +151,45 @@
     <h4>A Tiny Playground of clickable squares. Tick away</h4>
 
     <br>
+    <div id="alert-container" style="display: none; width: 100%; max-width: 900px; margin-bottom: 1rem;"></div>
     <div id="container">
     </div>
     
     <script src="/socket.io/socket.io.js"></script>
 
     <script>
+      function showAlert(message) {
+        const container = document.getElementById('alert-container');
+        container.innerHTML = `
+          <div class="alert-error">
+            <span>${message.replace(/&/g, '&amp;').replace(/</g, '<').replace(/>/g, '>')}</span>
+            <button class="alert-close" onclick="hideAlert()">&times;</button>
+          </div>
+        `;
+        container.style.display = 'block';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(hideAlert, 5000);
+      }
+
+      function hideAlert() {
+        const container = document.getElementById('alert-container');
+        container.style.display = 'none';
+      }
+    </script>
+
+    <script>
       const socket = io();
       const container = document.getElementById('container')
       const CHECKBOX_COUNT = 200
 
+      socket.on('server:error', (data) => {
+        const errorMessage = data.error;
+        if (errorMessage) {
+          showAlert(errorMessage);
+        }
+      });
+      
       socket.on('server:checkbox:change', (data)=>{
         console.log(`Socket Server Event`, data);
         const { index, checked } = data;

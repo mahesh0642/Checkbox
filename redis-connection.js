@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-
+import "dotenv/config";
 function createRedisConnection(){
     return new Redis(
       process.env.REDIS_URL
